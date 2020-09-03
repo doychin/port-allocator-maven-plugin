@@ -13,7 +13,7 @@ public class RandomAllocationStrategy extends AbstractAllocationStrategy {
 
 	private static final int MAX_TRIES = 10;
 
-	private Random random = new Random();
+	private final Random random = new Random();
 
 	@Override
 	protected int allocateNonDefaultPort(

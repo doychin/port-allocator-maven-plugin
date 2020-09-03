@@ -9,6 +9,6 @@ import org.sonatype.plugins.portallocator.PortUnavailableException;
  */
 public interface AllocationStrategy {
 
-	public int allocatePort(int defaultPort, PortAllocator allocator) throws PortUnavailableException, MojoExecutionException;
+	int allocatePort(int defaultPort, PortAllocator allocator) throws PortUnavailableException, MojoExecutionException;
 
 }
