@@ -19,6 +19,11 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.net.SocketException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +51,11 @@ public class PortAllocatorMojo
 	 */
 	private MavenProject project;
 
-	Set<InetAddress> addresses = new HashSet<InetAddress>();
+    private final Set<InetAddress> addresses = new HashSet<InetAddress>();
+
+    static final Map<String, List<Integer>> allocatedPortsMap = new HashMap<String, List<Integer>>();
+
+    static final Set<Integer> allocatedPorts = new HashSet<Integer>();
 
 	public void execute()
 		throws MojoExecutionException, MojoFailureException {
@@ -65,6 +74,17 @@ public class PortAllocatorMojo
 				int portNumber = port.allocatePort(this);
 				getLog().info("Assigning port '" + portNumber + "' to property '" + name + "'; duration: " + stopwatch);
 				project.getProperties().put(name, String.valueOf(portNumber));
+                synchronized (allocatedPortsMap) {
+                    List<Integer> portsList = allocatedPortsMap.get(project.getName());
+                    if (portsList == null) {
+                        portsList = new ArrayList<Integer>();
+                        allocatedPortsMap.put(project.getName(), portsList);
+                    }
+                    portsList.add(portNumber);
+                }
+                synchronized (allocatedPorts) {
+                    allocatedPorts.add(portNumber);
+                }
 			} else {
 				getLog().warn("Property '" + name + "' already has value '" + project.getProperties().get(name) + "'");
 			}
@@ -106,7 +126,7 @@ public class PortAllocatorMojo
 	public boolean allocatePort(final int portNumber) throws MojoExecutionException {
 		try {
 
-			Boolean preferIPv4 = Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false"));
+			boolean preferIPv4 = Boolean.parseBoolean(System.getProperty("java.net.preferIPv4Stack", "false"));
 			for (InetAddress address : addresses) {
 				if (address instanceof Inet4Address || !preferIPv4) {
 					Stopwatch stopwatch = new Stopwatch();
@@ -203,6 +223,13 @@ public class PortAllocatorMojo
 
 	private void tryOnHost(final int portNumber, final InetAddress host) throws IOException, MojoExecutionException {
 		final ServerSocket server;
+
+        synchronized (allocatedPorts) {
+            if (allocatedPorts.contains(portNumber)) {
+                throw new SocketException("Port " + portNumber + " is already allocated!");
+            }
+        }
+
 		try {
 			server = new ServerSocket(portNumber, 50, host);
 		} catch (BindException e) {
