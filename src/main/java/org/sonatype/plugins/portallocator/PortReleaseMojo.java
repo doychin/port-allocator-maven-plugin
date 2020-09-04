@@ -5,9 +5,6 @@ import java.util.List;
 import org.apache.maven.plugin.*;
 import org.apache.maven.project.MavenProject;
 
-import static org.sonatype.plugins.portallocator.PortAllocatorMojo.allocatedPorts;
-import static org.sonatype.plugins.portallocator.PortAllocatorMojo.allocatedPortsMap;
-
 /**
  * Release ports allocated from PortAllocatorMojo
  * @goal release-ports
@@ -33,18 +30,13 @@ public class PortReleaseMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().debug("Check for ports to cleanup");
 
-        List<Integer> portList;
-        synchronized (allocatedPortsMap) {
-            portList = allocatedPortsMap.remove(project.getName());
-            if (portList == null || portList.isEmpty()) {
-                return;
-            }
-        }
+        AllocationMap allocationMap = new AllocationMap(getPluginContext());
 
-        getLog().debug("Releasing ports " + portList);
-        synchronized (allocatedPorts) {
-            allocatedPorts.removeAll(portList);
+        List<Integer> portList = allocationMap.releasePorts(project.getName());
+        if (portList == null) {
+            return;
         }
+        getLog().debug("Releasing ports " + portList);
 
         project.getProperties().setProperty("released.ports", portList.toString());
     }

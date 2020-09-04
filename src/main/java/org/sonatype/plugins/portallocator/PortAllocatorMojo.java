@@ -53,41 +53,34 @@ public class PortAllocatorMojo
 
     private final Set<InetAddress> addresses = new HashSet<InetAddress>();
 
-    static final Map<String, List<Integer>> allocatedPortsMap = new HashMap<String, List<Integer>>();
-
-    static final Set<Integer> allocatedPorts = new HashSet<Integer>();
+	private AllocationMap allocationMap;
 
 	public void execute()
 		throws MojoExecutionException, MojoFailureException {
 
 		resolveAddresses();
 
-		for (Port port : ports) {
-			String name = port.getName();
-			if (name == null) {
-				getLog().warn("Port name not defined.  Skipping.");
-				continue;
-			}
+		allocationMap = new AllocationMap(getPluginContext());
+		try {
+			for (Port port : ports) {
+				String name = port.getName();
+				if (name == null) {
+					getLog().warn("Port name not defined.  Skipping.");
+					continue;
+				}
 
-			if (!project.getProperties().containsKey(name)) {
-				Stopwatch stopwatch = new Stopwatch();
-				int portNumber = port.allocatePort(this);
-				getLog().info("Assigning port '" + portNumber + "' to property '" + name + "'; duration: " + stopwatch);
-				project.getProperties().put(name, String.valueOf(portNumber));
-                synchronized (allocatedPortsMap) {
-                    List<Integer> portsList = allocatedPortsMap.get(project.getName());
-                    if (portsList == null) {
-                        portsList = new ArrayList<Integer>();
-                        allocatedPortsMap.put(project.getName(), portsList);
-                    }
-                    portsList.add(portNumber);
-                }
-                synchronized (allocatedPorts) {
-                    allocatedPorts.add(portNumber);
-                }
-			} else {
-				getLog().warn("Property '" + name + "' already has value '" + project.getProperties().get(name) + "'");
+				if (!project.getProperties().containsKey(name)) {
+					Stopwatch stopwatch = new Stopwatch();
+					int portNumber = port.allocatePort(this);
+					getLog().info("Assigning port '" + portNumber + "' to property '" + name + "'; duration: " + stopwatch);
+					project.getProperties().put(name, String.valueOf(portNumber));
+					allocationMap.registerPort(portNumber, project.getName());
+				} else {
+					getLog().warn("Property '" + name + "' already has value '" + project.getProperties().get(name) + "'");
+				}
 			}
+		} finally {
+			allocationMap = null;
 		}
 	}
 
@@ -224,11 +217,9 @@ public class PortAllocatorMojo
 	private void tryOnHost(final int portNumber, final InetAddress host) throws IOException, MojoExecutionException {
 		final ServerSocket server;
 
-        synchronized (allocatedPorts) {
-            if (allocatedPorts.contains(portNumber)) {
-                throw new SocketException("Port " + portNumber + " is already allocated!");
-            }
-        }
+		if (allocationMap.contains(portNumber)) {
+			throw new SocketException("Port " + portNumber + " is already allocated!");
+		}
 
 		try {
 			server = new ServerSocket(portNumber, 50, host);
