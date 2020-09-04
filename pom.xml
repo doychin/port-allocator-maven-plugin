@@ -57,8 +57,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>5</source>
+          <target>5</target>
         </configuration>
       </plugin>
       <plugin>
@@ -79,6 +79,9 @@
         <executions>
           <execution>
             <id>integration-test</id>
+            <configuration>
+              <invokerPropertiesFile>maven.config</invokerPropertiesFile>
+            </configuration>
             <goals>
               <goal>install</goal>
               <goal>run</goal>
