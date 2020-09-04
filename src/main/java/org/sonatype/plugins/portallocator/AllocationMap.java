@@ -4,6 +4,10 @@ import java.util.*;
 
 public class AllocationMap {
 
+    public static final String ALLOCATED_PORTS_MAP = "allocatedPortsMap";
+
+    public static final String ALLOCATED_PORTS = "allocatedPorts";
+
     private final Map<String, List<Integer>> allocatedPortsMap;
 
     private final Set<Integer> allocatedPorts;
@@ -11,18 +15,18 @@ public class AllocationMap {
     @SuppressWarnings("unchecked")
     public AllocationMap(Map<String, Object> pluginContextMap) {
         synchronized (pluginContextMap) {
-            if (pluginContextMap.get("allocatedPortsMap") != null) {
-                allocatedPortsMap = (Map<String, List<Integer>>) pluginContextMap.get("allocatedPortsMap");
+            if (pluginContextMap.get(ALLOCATED_PORTS_MAP) != null) {
+                allocatedPortsMap = (Map<String, List<Integer>>) pluginContextMap.get(ALLOCATED_PORTS_MAP);
             } else {
                 allocatedPortsMap = new HashMap<String, List<Integer>>();
-                pluginContextMap.put("allocatedPortsMap", allocatedPortsMap);
+                pluginContextMap.put(ALLOCATED_PORTS_MAP, allocatedPortsMap);
             }
 
-            if (pluginContextMap.get("allocatedPorts") != null) {
-                allocatedPorts = (Set<Integer>) pluginContextMap.get("allocatedPorts");
+            if (pluginContextMap.get(ALLOCATED_PORTS) != null) {
+                allocatedPorts = (Set<Integer>) pluginContextMap.get(ALLOCATED_PORTS);
             } else {
                 allocatedPorts = new HashSet<Integer>();
-                pluginContextMap.put("allocatedPorts", allocatedPorts);
+                pluginContextMap.put(ALLOCATED_PORTS, allocatedPorts);
             }
         }
     }
