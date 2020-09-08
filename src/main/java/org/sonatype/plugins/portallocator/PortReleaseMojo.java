@@ -30,7 +30,7 @@ public class PortReleaseMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().debug("Check for ports to cleanup");
 
-        AllocationMap allocationMap = new AllocationMap(getPluginContext());
+        AllocationMap allocationMap = new AllocationMap();
 
         List<Integer> portList = allocationMap.releasePorts(project.getName());
         if (portList == null) {

@@ -56,7 +56,7 @@ public class PortAllocatorMojo
 
 		resolveAddresses();
 
-		allocationMap = new AllocationMap(getPluginContext());
+		allocationMap = new AllocationMap();
 		try {
 			for (Port port : ports) {
 				String name = port.getName();
